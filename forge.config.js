@@ -10,8 +10,9 @@ module.exports = {
           owner: 'LeonardoMV03',
           name: 'my-electron-app'
         },
+        authToken: '',
         prerelease: false,
-        draft: true
+        draft: true,
       }
     }
   ],
@@ -20,13 +21,13 @@ module.exports = {
   },
   rebuildConfig: {},
   makers: [
-    /*{
+    {
       name: '@electron-forge/maker-squirrel',
       config: {
-        certificateFile: './cert.pfx',
-        certificatePassword: process.env.CERTIFICATE_PASSWORD
+        //certificateFile: './cert.pfx',
+        //certificatePassword: process.env.CERTIFICATE_PASSWORD
       },
-    },*/
+    },
     {
       name: '@electron-forge/maker-zip',
       platforms: ['darwin'],
