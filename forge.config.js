@@ -10,7 +10,7 @@ module.exports = {
           owner: 'LeonardoMV03',
           name: 'my-electron-app'
         },
-        authToken: '',
+        authToken: process.env.GITHUB_TOKEN,
         prerelease: false,
         draft: true,
       }
