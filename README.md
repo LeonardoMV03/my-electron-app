@@ -11,29 +11,34 @@ Este proyecto es una app de ejemplo con una ventana principal que carga un archi
 ```text
 my-electron-app/
 ├─ forge.config.js
-├─ index.html
-├─ main.js
 ├─ package.json
-├─ preload.js
-└─ renderer.js
+├─ assets/              → iconos (tray, app)
+└─ src/
+   ├─ main/index.js     → proceso principal (ventanas, menú, tray, IPC)
+   ├─ preload/index.js  → puente seguro (contextBridge)
+   ├─ renderer/         → UI (index.html + renderer.js)
+   ├─ shared/ipc.js     → constantes de canales IPC
+   └─ db/database.js    → acceso a SQLite (better-sqlite3)
 ```
 
 ### Archivos principales
 
-- `main.js`: proceso principal de Electron. Crea la ventana, carga `index.html` y registra el canal IPC `ping`.
-- `preload.js`: puente seguro entre el proceso principal y el renderizador. Expone `versions` en `window`.
-- `renderer.js`: lógica del renderizador. Lee `versions` y pinta información en la interfaz.
-- `index.html`: interfaz visual principal de la app.
+- `src/main/index.js`: proceso principal de Electron. Crea la ventana, el menú nativo, el tray y registra los canales IPC.
+- `src/preload/index.js`: puente seguro entre el proceso principal y el renderizador. Expone `window.versions` y `window.api`.
+- `src/renderer/renderer.js`: lógica del renderizador. Lee `versions`, usa `window.api` y pinta información en la interfaz.
+- `src/renderer/index.html`: interfaz visual principal de la app.
+- `src/shared/ipc.js`: única fuente de verdad de los nombres de canales IPC.
+- `src/db/database.js`: capa de datos con SQLite (solo proceso principal).
 - `forge.config.js`: configuración de Electron Forge, empaquetado, makers y publicación en GitHub.
 - `package.json`: scripts, metadatos y dependencias.
 
 ## Funcionamiento
 
-1. Al ejecutar la app, Electron inicia `main.js`.
-2. `main.js` crea una ventana de `BrowserWindow` y carga `index.html`.
-3. `preload.js` expone datos del entorno, como la versión de Node.js, Chrome y Electron.
-4. `renderer.js` toma esos datos y los muestra en pantalla.
-5. El canal IPC `ping` está preparado para probar comunicación entre procesos y devolver `pong`.
+1. Al ejecutar la app, Electron inicia `src/main/index.js`.
+2. `src/main/index.js` crea una ventana de `BrowserWindow`, el menú y el tray.
+3. `src/preload/index.js` expone una API mínima al renderer.
+4. `src/renderer/renderer.js` consume esa API y actualiza la interfaz.
+5. Los canales IPC cubren: ping, contador (estado en main), selector de archivos, notificaciones nativas y notas persistidas en SQLite.
 
 ## Arquitectura
 
@@ -41,24 +46,23 @@ La app sigue la arquitectura típica de Electron con un proceso principal, un pr
 
 ```mermaid
 flowchart LR
-	A[main.js\nProceso principal] --> B[BrowserWindow]
+	A[src/main/index.js\nProceso principal] --> B[BrowserWindow]
 	B --> C[index.html\nInterfaz]
 	C --> D[renderer.js\nLógica visual]
-	A --> E[ipcMain.handle('ping')]
-	F[preload.js\nPuente seguro] --> D
+	A --> E[ipcMain.handle\ncanales IPC]
+	F[src/preload/index.js\nPuente seguro] --> D
 	A --> F
-	F --> G[window.versions]
+	F --> G[window.versions + window.api]
 	D --> G
 	D --> E
-	E --> H[pong]
+	E --> H[pong / datos / notas]
 ```
 
 ### Flujo de comunicación
 
-- `main.js` crea la ventana y registra la ruta IPC.
-- `preload.js` expone solo las APIs necesarias en `window`.
-- `renderer.js` consume esas APIs y actualiza la interfaz.
-- `ipcMain.handle('ping')` devuelve `pong` cuando se invoca desde el renderizador.
+- `src/main/index.js` crea la ventana y registra los canales IPC (constantes en `src/shared/ipc.js`).
+- `src/preload/index.js` expone solo las APIs necesarias en `window`.
+- `src/renderer/renderer.js` consume esas APIs y actualiza la interfaz.
 
 ## Scripts disponibles
 
@@ -92,8 +96,10 @@ npm run publish
 ## Notas técnicas
 
 - La app usa `contextBridge` en el preload, que es la forma recomendada de exponer API al renderer.
-- El archivo `index.html` incluye una política básica de seguridad con `Content-Security-Policy`.
+- El archivo `src/renderer/index.html` incluye una política básica de seguridad con `Content-Security-Policy`.
 - El proyecto está configurado como `commonjs` en `package.json`.
+- La persistencia usa `better-sqlite3` (módulo nativo) solo desde el proceso principal; la base vive en `app.getPath('userData')`.
+- Auto-updates configurados con `update-electron-app` (requiere un release publicado en GitHub, no un draft).
 
 ## Guía de arquitectura, Electron y SQLite
 
@@ -104,29 +110,30 @@ Esta sección resume una forma sólida de trabajar con este proyecto cuando crez
 La estructura más estable para una app Electron pequeña o mediana es separar responsabilidades por capas.
 
 ```text
-main.js      -> ciclo de vida, ventanas, IPC, acceso a sistema
-preload.js   -> puente seguro entre main y renderer
-renderer.js  -> interfaz, eventos y consumo de datos
-SQLite       -> persistencia local controlada desde main
+src/main/index.js      -> ciclo de vida, ventanas, IPC, acceso a sistema
+src/preload/index.js   -> puente seguro entre main y renderer
+src/renderer/renderer.js -> interfaz, eventos y consumo de datos
+src/db/database.js     -> persistencia local (SQLite) controlada desde main
+src/shared/ipc.js      -> constantes de canales IPC compartidas
 ```
 
 #### Roles de cada capa
 
-- `main.js`: crea la ventana, controla el cierre de la aplicación y administra operaciones privilegiadas.
-- `preload.js`: expone una API mínima y segura al renderizador usando `contextBridge`.
-- `renderer.js`: maneja la experiencia visual y llama a funciones expuestas por `preload.js`.
-- SQLite: almacena datos locales como notas, tareas, clientes, configuraciones o historial.
+- `src/main/index.js`: crea la ventana, controla el cierre de la aplicación y administra operaciones privilegiadas.
+- `src/preload/index.js`: expone una API mínima y segura al renderizador usando `contextBridge`.
+- `src/renderer/renderer.js`: maneja la experiencia visual y llama a funciones expuestas por `preload.js`.
+- `src/db/database.js`: capa única de acceso a SQLite; solo la usa el proceso principal.
 
 ### Cómo funciona Electron en este proyecto
 
 Electron combina Node.js y Chromium. En este repositorio ya se ve el flujo básico:
 
-1. Electron arranca en `main.js`.
-2. `main.js` crea la ventana principal con `BrowserWindow`.
-3. La ventana carga `index.html` como interfaz local.
-4. `preload.js` expone una API limitada a `window`.
-5. `renderer.js` consume esa API y actualiza el contenido.
-6. El canal `ping` demuestra comunicación IPC entre procesos.
+1. Electron arranca en `src/main/index.js`.
+2. El main crea la ventana principal con `BrowserWindow`.
+3. La ventana carga `src/renderer/index.html` como interfaz local.
+4. `src/preload/index.js` expone una API limitada a `window`.
+5. `src/renderer/renderer.js` consume esa API y actualiza el contenido.
+6. Los canales IPC (constantes en `src/shared/ipc.js`) comunican ambos procesos: ping, contador, archivos, notificaciones y notas.
 
 ### Buenas prácticas para Electron
 
@@ -139,7 +146,7 @@ Electron combina Node.js y Chromium. En este repositorio ya se ve el flujo bási
 
 ### Persistencia con SQLite
 
-Este proyecto todavía no usa SQLite, pero es la opción más práctica para guardar datos locales en una app de escritorio.
+La capa `src/db/database.js` ya implementa persistencia local con `better-sqlite3`: abre la base en `app.getPath('userData')`, aplica migraciones simples y expone operaciones de notas. La UI de notas (agregar/eliminar) la consume vía IPC.
 
 #### Cuándo usar SQLite
 
@@ -151,7 +158,7 @@ Este proyecto todavía no usa SQLite, pero es la opción más práctica para gua
 
 La recomendación es no abrir SQLite desde el renderizador. Lo más seguro es:
 
-- abrir la base desde `main.js` o desde un módulo de acceso a datos que solo use el proceso principal;
+- abrir la base desde `src/main/index.js` o desde un módulo de acceso a datos que solo use el proceso principal;
 - exponer operaciones concretas en `preload.js`;
 - consumir esas operaciones desde `renderer.js` sin tocar la base directamente.
 
@@ -203,9 +210,9 @@ La instalación de una app Electron depende del sistema operativo objetivo. En e
 
 La publicación usa GitHub Releases y requiere `GITHUB_TOKEN` en el entorno. No conviene dejar tokens hardcodeados en el repositorio.
 
-### Estructura sugerida cuando crezca
+### Estructura del proyecto
 
-Si el proyecto empieza a crecer, conviene organizarlo así:
+Esta estructura ya está implementada en el repo. Si crece más, se puede seguir ampliando igual:
 
 ```text
 src/
@@ -216,16 +223,16 @@ src/
 └─ db/
 ```
 
-- `main/`: ventanas, menús, IPC y lógica del sistema.
+- `main/`: ventanas, menús, tray, IPC y lógica del sistema.
 - `preload/`: API segura expuesta al renderer.
 - `renderer/`: componentes visuales y estado de la interfaz.
-- `shared/`: utilidades, tipos o validadores comunes.
+- `shared/`: utilidades, tipos o validadores comunes (ej. constantes IPC).
 - `db/`: conexión, consultas y migraciones de SQLite.
 
 ### Resumen práctico
 
 - Electron te da la interfaz de escritorio.
-- `preload.js` te protege de exponer demasiado.
-- SQLite te resuelve la persistencia local.
+- `src/preload/index.js` te protege de exponer demasiado.
+- `src/db/database.js` resuelve la persistencia local.
 - Electron Forge te resuelve empaquetado y publicación.
 - Separar responsabilidades desde el inicio evita que la app se vuelva difícil de mantener.

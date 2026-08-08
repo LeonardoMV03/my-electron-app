@@ -1,7 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, Tray, nativeImage } = require('electron/main');
 const path = require('node:path');
 const { updateElectronApp } = require('update-electron-app');
-const notes = require('./db/database');
+const notes = require('../db/database');
+const { PING, COUNT_GET, COUNT_INC, DIALOG_OPEN_FILE, NOTIFY_SEND, NOTES_LIST, NOTES_CREATE, NOTES_DELETE } = require('../shared/ipc');
 
 updateElectronApp();
 
@@ -16,12 +17,12 @@ const createWindow = () => {
         width: 800,
         height: 600,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, '..', 'preload', 'index.js')
         }
     });
 
-    window.loadFile('index.html');
-}
+    window.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+};
 
 const getMainWindow = () => BrowserWindow.getAllWindows()[0];
 
@@ -83,7 +84,7 @@ const createMenu = () => {
 };
 
 const createTray = () => {
-    const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-icon.png'));
+    const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'tray-icon.png'));
     tray = new Tray(icon.resize({ width: 16, height: 16 }));
     tray.setToolTip('my-electron-app');
     tray.setContextMenu(Menu.buildFromTemplate([
@@ -94,16 +95,15 @@ const createTray = () => {
     tray.on('click', () => toggleMainWindow());
 };
 
-
-app.whenReady().then(() => {
-    ipcMain.handle('ping', () => 'pong');
+const registerIpcHandlers = () => {
+    ipcMain.handle(PING, () => 'pong');
 
     // Contador: el estado se guarda en main y cada llamada lo muta.
-    ipcMain.handle('count:get', () => count);
-    ipcMain.handle('count:inc', () => ++count);
+    ipcMain.handle(COUNT_GET, () => count);
+    ipcMain.handle(COUNT_INC, () => ++count);
 
     // Diálogos nativos: solo el proceso principal puede abrirlos.
-    ipcMain.handle('dialog:open-file', async () => {
+    ipcMain.handle(DIALOG_OPEN_FILE, async () => {
         const result = await dialog.showOpenDialog({
             title: 'Elige un archivo',
             properties: ['openFile']
@@ -112,7 +112,7 @@ app.whenReady().then(() => {
     });
 
     // Notificaciones nativas del sistema.
-    ipcMain.handle('notify:send', (event, { title, body }) => {
+    ipcMain.handle(NOTIFY_SEND, (event, { title, body }) => {
         if (!Notification.isSupported()) {
             return false;
         }
@@ -123,26 +123,29 @@ app.whenReady().then(() => {
         return true;
     });
 
-    createWindow();
-
-    // for MacOS
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0){
     // Notas: persistencia local en SQLite, siempre desde el proceso principal.
-    ipcMain.handle('notes:list', () => notes.listNotes());
-    ipcMain.handle('notes:create', (event, content) => notes.createNote(content));
-    ipcMain.handle('notes:delete', (event, id) => notes.deleteNote(id));
+    ipcMain.handle(NOTES_LIST, () => notes.listNotes());
+    ipcMain.handle(NOTES_CREATE, (event, content) => notes.createNote(content));
+    ipcMain.handle(NOTES_DELETE, (event, id) => notes.deleteNote(id));
+};
 
+app.whenReady().then(() => {
+    registerIpcHandlers();
     createMenu();
     createTray();
     createWindow();
+
+    // En macOS la app no cierra al cerrar la última ventana (convención de plataforma).
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
         }
     });
 });
 
-// Closed the process in windows/linux
+// En Windows y Linux, cerrar la última ventana cierra la app.
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin'){
+    if (process.platform !== 'darwin') {
         app.quit();
     }
 });

@@ -9,7 +9,7 @@
     "url": "https://github.com/LeonardoMV03/my-electron-app.git"
   },
   "type": "commonjs",
-  "main": "main.js",
+  "main": "src/main/index.js",
   "scripts": {
     "start": "electron-forge start",
     "test": "echo \"Error: no test specified\" && exit 1",
