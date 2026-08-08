@@ -4,8 +4,6 @@ const { updateElectronApp } = require('update-electron-app');
 const notes = require('../db/database');
 const { PING, COUNT_GET, COUNT_INC, DIALOG_OPEN_FILE, NOTIFY_SEND, NOTES_LIST, NOTES_CREATE, NOTES_DELETE } = require('../shared/ipc');
 
-updateElectronApp();
-
 // El estado del contador vive en el proceso principal, nunca en el renderer.
 let count = 0;
 
@@ -130,6 +128,11 @@ const registerIpcHandlers = () => {
 };
 
 app.whenReady().then(() => {
+    // Auto-updates solo en la app empaquetada: en dev solo generaría ruido.
+    if (app.isPackaged) {
+        updateElectronApp();
+    }
+
     registerIpcHandlers();
     createMenu();
     createTray();

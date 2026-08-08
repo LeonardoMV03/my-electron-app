@@ -12,18 +12,20 @@ module.exports = {
         },
         authToken: process.env.GITHUB_TOKEN,
         prerelease: false,
-        draft: true,
+        draft: false,
       }
     }
   ],
   packagerConfig: {
     asar: true,
+    icon: './assets/icon',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
+        setupIcon: './assets/icon.ico',
         //certificateFile: './cert.pfx',
         //certificatePassword: process.env.CERTIFICATE_PASSWORD
       },
@@ -42,10 +44,6 @@ module.exports = {
     },
   ],
   plugins: [
-    {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
-    },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({

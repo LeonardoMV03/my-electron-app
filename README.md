@@ -18,7 +18,7 @@ my-electron-app/
    ├─ preload/index.js  → puente seguro (contextBridge)
    ├─ renderer/         → UI (index.html + renderer.js)
    ├─ shared/ipc.js     → constantes de canales IPC
-   └─ db/database.js    → acceso a SQLite (better-sqlite3)
+   └─ db/database.js    → acceso a SQLite (node:sqlite)
 ```
 
 ### Archivos principales
@@ -93,12 +93,21 @@ $env:GITHUB_TOKEN="tu_token"
 npm run publish
 ```
 
+### Flujo de auto-updates
+
+La app usa `update-electron-app` (solo cuando `app.isPackaged`), que revisa GitHub Releases buscando una versión más nueva que la del `package.json`:
+
+- El release debe estar **publicado** (no en draft): `draft: false` en `forge.config.js` hace que `npm run publish` publique el release de inmediato.
+- En Windows (Squirrel), el update necesita el archivo `latest.yml` que Forge sube junto al instalador; en macOS usa ZIP firmados y en Linux DEB/RPM.
+- Bump de versión: sube `version` en `package.json` (ej. `1.0.0` → `1.0.1`) antes de `npm run publish`; sin bump la app instalada no detecta cambios.
+- Cada plataforma solo publica sus propios makers (zip es solo darwin), así que para un release multi-plataforma conviene ejecutar `npm run publish` desde cada sistema o usar un pipeline de CI.
+
 ## Notas técnicas
 
 - La app usa `contextBridge` en el preload, que es la forma recomendada de exponer API al renderer.
 - El archivo `src/renderer/index.html` incluye una política básica de seguridad con `Content-Security-Policy`.
 - El proyecto está configurado como `commonjs` en `package.json`.
-- La persistencia usa `better-sqlite3` (módulo nativo) solo desde el proceso principal; la base vive en `app.getPath('userData')`.
+- La persistencia usa `node:sqlite` (integrado en Node 24) solo desde el proceso principal; la base vive en `app.getPath('userData')`.
 - Auto-updates configurados con `update-electron-app` (requiere un release publicado en GitHub, no un draft).
 
 ## Guía de arquitectura, Electron y SQLite
@@ -146,7 +155,7 @@ Electron combina Node.js y Chromium. En este repositorio ya se ve el flujo bási
 
 ### Persistencia con SQLite
 
-La capa `src/db/database.js` ya implementa persistencia local con `better-sqlite3`: abre la base en `app.getPath('userData')`, aplica migraciones simples y expone operaciones de notas. La UI de notas (agregar/eliminar) la consume vía IPC.
+La capa `src/db/database.js` ya implementa persistencia local con **`node:sqlite`** (el SQLite integrado en Node 24, sin módulos nativos): abre la base en `app.getPath('userData')`, aplica migraciones simples y expone operaciones de notas. La UI de notas (agregar/eliminar) la consume vía IPC.
 
 #### Cuándo usar SQLite
 
