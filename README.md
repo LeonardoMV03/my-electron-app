@@ -105,9 +105,10 @@ La app usa `update-electron-app` (solo cuando `app.isPackaged`), que revisa GitH
 ## Notas técnicas
 
 - La app usa `contextBridge` en el preload, que es la forma recomendada de exponer API al renderer.
+- El preload corre con `sandbox: false` (el renderer sigue aislado con `contextIsolation`): es necesario para que el preload pueda hacer `require` local de `src/shared/ipc`.
 - El archivo `src/renderer/index.html` incluye una política básica de seguridad con `Content-Security-Policy`.
 - El proyecto está configurado como `commonjs` en `package.json`.
-- La persistencia usa `node:sqlite` (integrado en Node 24) solo desde el proceso principal; la base vive en `app.getPath('userData')`.
+- La persistencia usa `node:sqlite` (integrado en Node 24) solo desde el proceso principal; la base vive en `app.getPath('userData')` y se crea en el primer arranque cuando el renderer pide las notas vía IPC.
 - Auto-updates configurados con `update-electron-app` (requiere un release publicado en GitHub, no un draft).
 
 ## Guía de arquitectura, Electron y SQLite

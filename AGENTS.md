@@ -21,7 +21,7 @@ Proyecto de aprendizaje: app de escritorio con **Electron** + **Electron Forge**
 ## Gotchas
 
 - `out/` es generado por Forge y está en `.gitignore`; no editar ni versionar.
-- Seguridad por defecto: `nodeIntegration` desactivado, `contextIsolation` activado. No los cambies; sigue el patrón de preload.
+- Seguridad por defecto: `nodeIntegration` desactivado, `contextIsolation` activado, pero **`sandbox: false`** en `src/main/index.js` — necesario porque el preload importa `src/shared/ipc` con `require` local (los preloads sandboxed solo permiten un subconjunto de builtins de Node y fallan silenciosamente con requires relativos). No quites esa línea sin eliminar antes el `require` del preload.
 - `forge.config.js`: `asar: true` + fuses (runAsNode y node CLI flags desactivados) — el main no puede ejecutarse fuera del asar empaquetado.
 - Makers: Squirrel (Windows), zip (macOS), deb/rpm (Linux). `electron-squirrel-startup` debe seguir en `dependencies` para el instalador de Windows.
 - `src/main/index.js` — en macOS la app no cierra al cerrar la última ventana (convención de plataforma).

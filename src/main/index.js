@@ -15,7 +15,11 @@ const createWindow = () => {
         width: 800,
         height: 600,
         webPreferences: {
-            preload: path.join(__dirname, '..', 'preload', 'index.js')
+            preload: path.join(__dirname, '..', 'preload', 'index.js'),
+            // sandbox: false permite require local en el preload (necesario para
+            // importar src/shared/ipc). contextIsolation sigue activo: el renderer
+            // solo ve lo que expone contextBridge.
+            sandbox: false
         }
     });
 
