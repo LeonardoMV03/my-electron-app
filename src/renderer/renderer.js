@@ -2,6 +2,29 @@ const information = document.getElementById('info')
 
 information.innerText = `Esta aplicación está usando Chrome (v${versions.chrome()}), Node.js (v${versions.node()}), and Electron (v${versions.electron()})`;
 
+// --- Navegación entre vistas por hash: '#notes' muestra la vista de notas ---
+const viewMain = document.getElementById('view-main');
+const viewNotes = document.getElementById('view-notes');
+
+const showView = (name) => {
+    viewMain.hidden = name !== 'main';
+    viewNotes.hidden = name !== 'notes';
+};
+
+window.addEventListener('hashchange', () => {
+    showView(window.location.hash === '#notes' ? 'notes' : 'main');
+});
+
+document.getElementById('go-notes').addEventListener('click', () => {
+    window.location.hash = '#notes';
+});
+
+document.getElementById('go-home').addEventListener('click', () => {
+    window.location.hash = '#home';
+});
+
+showView(window.location.hash === '#notes' ? 'notes' : 'main');
+
 // --- Contador: el estado vive en main, el renderer solo pide y muestra ---
 const countValue = document.getElementById('count-value');
 const countButton = document.getElementById('count-button');

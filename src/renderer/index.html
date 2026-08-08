@@ -13,28 +13,32 @@
     <title>¡Hola desde el renderizador Electron!</title>
   </head>
   <body>
-    <h1>¡Hola desde el renderizador Electron!</h1>
-    <p>👋</p>
-    <p id="info"></p>
+    <section id="view-main">
+      <h1>¡Hola desde el renderizador Electron!</h1>
+      <p>👋</p>
+      <p id="info"></p>
 
-    <section>
-      <h2>Contador (IPC)</h2>
-      <p>Valor: <span id="count-value">0</span></p>
-      <button id="count-button">Incrementar</button>
+      <section>
+        <h2>Contador (IPC)</h2>
+        <p>Valor: <span id="count-value">0</span></p>
+        <button id="count-button">Incrementar</button>
+      </section>
+
+      <section>
+        <h2>Selector de archivos (dialog nativo)</h2>
+        <button id="file-button">Elegir archivo</button>
+        <p id="file-path"></p>
+      </section>
+
+      <section>
+        <h2>Notificación nativa</h2>
+        <button id="notify-button">Mostrar notificación</button>
+      </section>
+
+      <button id="go-notes">Ir a la vista de notas</button>
     </section>
 
-    <section>
-      <h2>Selector de archivos (dialog nativo)</h2>
-      <button id="file-button">Elegir archivo</button>
-      <p id="file-path"></p>
-    </section>
-
-    <section>
-      <h2>Notificación nativa</h2>
-      <button id="notify-button">Mostrar notificación</button>
-    </section>
-
-    <section>
+    <section id="view-notes" hidden>
       <h2>Notas (SQLite)</h2>
       <form id="note-form">
         <input id="note-title" type="text" maxlength="100" placeholder="Título (obligatorio)" required />
@@ -42,6 +46,7 @@
         <button type="submit">Agregar</button>
       </form>
       <ul id="note-list"></ul>
+      <button id="go-home">Volver al inicio</button>
     </section>
   </body>
   <script src="./renderer.js"></script>
