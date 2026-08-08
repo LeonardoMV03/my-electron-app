@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, Tray, nativeImage } = require('electron/main');
 const path = require('node:path');
 const { updateElectronApp } = require('update-electron-app');
+const notes = require('./db/database');
 
 updateElectronApp();
 
@@ -127,6 +128,11 @@ app.whenReady().then(() => {
     // for MacOS
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0){
+    // Notas: persistencia local en SQLite, siempre desde el proceso principal.
+    ipcMain.handle('notes:list', () => notes.listNotes());
+    ipcMain.handle('notes:create', (event, content) => notes.createNote(content));
+    ipcMain.handle('notes:delete', (event, id) => notes.deleteNote(id));
+
     createMenu();
     createTray();
     createWindow();

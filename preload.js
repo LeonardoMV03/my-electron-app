@@ -17,5 +17,10 @@ contextBridge.exposeInMainWorld('api', {
     dialog: {
         openFile: () => ipcRenderer.invoke('dialog:open-file')
     },
-    notify: (title, body) => ipcRenderer.invoke('notify:send', { title, body })
+    notify: (title, body) => ipcRenderer.invoke('notify:send', { title, body }),
+    notes: {
+        list: () => ipcRenderer.invoke('notes:list'),
+        create: (content) => ipcRenderer.invoke('notes:create', content),
+        delete: (id) => ipcRenderer.invoke('notes:delete', id)
+    }
 });
