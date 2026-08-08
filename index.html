@@ -16,6 +16,23 @@
     <h1>¡Hola desde el renderizador Electron!</h1>
     <p>👋</p>
     <p id="info"></p>
+
+    <section>
+      <h2>Contador (IPC)</h2>
+      <p>Valor: <span id="count-value">0</span></p>
+      <button id="count-button">Incrementar</button>
+    </section>
+
+    <section>
+      <h2>Selector de archivos (dialog nativo)</h2>
+      <button id="file-button">Elegir archivo</button>
+      <p id="file-path"></p>
+    </section>
+
+    <section>
+      <h2>Notificación nativa</h2>
+      <button id="notify-button">Mostrar notificación</button>
+    </section>
   </body>
   <script src="./renderer.js"></script>
 </html>

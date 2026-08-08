@@ -1,8 +1,11 @@
-const { app, BrowserWindow, ipcMain } = require('electron/main');
+const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron/main');
 const path = require('node:path');
 const { updateElectronApp } = require('update-electron-app');
 
 updateElectronApp();
+
+// El estado del contador vive en el proceso principal, nunca en el renderer.
+let count = 0;
 
 const createWindow = () => {
     const window = new BrowserWindow({
@@ -19,6 +22,32 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
     ipcMain.handle('ping', () => 'pong');
+
+    // Contador: el estado se guarda en main y cada llamada lo muta.
+    ipcMain.handle('count:get', () => count);
+    ipcMain.handle('count:inc', () => ++count);
+
+    // Diálogos nativos: solo el proceso principal puede abrirlos.
+    ipcMain.handle('dialog:open-file', async () => {
+        const result = await dialog.showOpenDialog({
+            title: 'Elige un archivo',
+            properties: ['openFile']
+        });
+        return result.canceled ? null : result.filePaths[0];
+    });
+
+    // Notificaciones nativas del sistema.
+    ipcMain.handle('notify:send', (event, { title, body }) => {
+        if (!Notification.isSupported()) {
+            return false;
+        }
+        new Notification({
+            title: String(title || ''),
+            body: String(body || '')
+        }).show();
+        return true;
+    });
+
     createWindow();
 
     // for MacOS
