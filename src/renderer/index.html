@@ -36,8 +36,11 @@
 
     <section>
       <h2>Notas (SQLite)</h2>
-      <input id="note-input" type="text" maxlength="500" placeholder="Escribe una nota..." />
-      <button id="note-add">Agregar</button>
+      <form id="note-form">
+        <input id="note-title" type="text" maxlength="100" placeholder="Título (obligatorio)" required />
+        <input id="note-input" type="text" maxlength="500" placeholder="Contenido (opcional)" />
+        <button type="submit">Agregar</button>
+      </form>
       <ul id="note-list"></ul>
     </section>
   </body>

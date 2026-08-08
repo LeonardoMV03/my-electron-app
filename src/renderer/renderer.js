@@ -34,8 +34,9 @@ notifyButton.addEventListener('click', () => {
 });
 
 // --- Notas: la base la abre y gestiona el proceso principal ---
+const noteForm = document.getElementById('note-form');
+const noteTitle = document.getElementById('note-title');
 const noteInput = document.getElementById('note-input');
-const noteAdd = document.getElementById('note-add');
 const noteList = document.getElementById('note-list');
 
 const renderNotes = async () => {
@@ -43,7 +44,17 @@ const renderNotes = async () => {
     noteList.replaceChildren();
     for (const note of notes) {
         const li = document.createElement('li');
-        li.textContent = `${note.content} — ${note.created_at} `;
+
+        const title = document.createElement('strong');
+        title.textContent = note.title || '(Sin título)';
+
+        const details = document.createElement('span');
+        const parts = [];
+        if (note.content) {
+            parts.push(note.content);
+        }
+        parts.push(note.created_at);
+        details.textContent = ` — ${parts.join(' — ')}`;
 
         const del = document.createElement('button');
         del.textContent = 'Eliminar';
@@ -51,15 +62,19 @@ const renderNotes = async () => {
             await window.api.notes.delete(note.id);
             renderNotes();
         });
-        li.appendChild(del);
+
+        li.append(title, details, del);
         noteList.appendChild(li);
     }
 };
 
-noteAdd.addEventListener('click', async () => {
-    const content = noteInput.value.trim();
-    if (!content) return;
-    await window.api.notes.create(content);
+noteForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await window.api.notes.create({
+        title: noteTitle.value,
+        content: noteInput.value
+    });
+    noteTitle.value = '';
     noteInput.value = '';
     renderNotes();
 });

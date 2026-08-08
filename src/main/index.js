@@ -127,7 +127,7 @@ const registerIpcHandlers = () => {
 
     // Notas: persistencia local en SQLite, siempre desde el proceso principal.
     ipcMain.handle(NOTES_LIST, () => notes.listNotes());
-    ipcMain.handle(NOTES_CREATE, (event, content) => notes.createNote(content));
+    ipcMain.handle(NOTES_CREATE, (event, note) => notes.createNote(note));
     ipcMain.handle(NOTES_DELETE, (event, id) => notes.deleteNote(id));
 };
 

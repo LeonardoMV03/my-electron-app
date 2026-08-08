@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('api', {
     notify: (title, body) => ipcRenderer.invoke(NOTIFY_SEND, { title, body }),
     notes: {
         list: () => ipcRenderer.invoke(NOTES_LIST),
-        create: (content) => ipcRenderer.invoke(NOTES_CREATE, content),
+        create: (note) => ipcRenderer.invoke(NOTES_CREATE, note),
         delete: (id) => ipcRenderer.invoke(NOTES_DELETE, id)
     }
 });
