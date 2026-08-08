@@ -156,7 +156,14 @@ Electron combina Node.js y Chromium. En este repositorio ya se ve el flujo bási
 
 ### Persistencia con SQLite
 
-La capa `src/db/database.js` ya implementa persistencia local con **`node:sqlite`** (el SQLite integrado en Node 24, sin módulos nativos): abre la base en `app.getPath('userData')`, aplica migraciones simples y expone operaciones de notas. La UI de notas (agregar/eliminar) la consume vía IPC.
+La capa `src/db/database.js` ya implementa persistencia local con **`node:sqlite`** (el SQLite integrado en Node 24, sin módulos nativos): abre la base en `app.getPath('userData')`, aplica migraciones versionadas y expone operaciones de notas. La UI de notas (agregar/eliminar) la consume vía IPC.
+
+#### Migraciones de esquema
+
+Los cambios de esquema se manejan con `PRAGMA user_version` en `src/db/migrations.js`: una lista ordenada de pasos donde cada uno es una función. Al abrir la base, `runMigrations` aplica solo los pasos pendientes en una transacción y sube `user_version`. Para un cambio futuro:
+
+1. Agregar una nueva función al final del array `MIGRATIONS` (nunca editar una ya aplicada: los usuarios ya la tienen en su base).
+2. Si alteras una tabla con filas, respeta las reglas de SQLite (ej. `ADD COLUMN NOT NULL` exige un `DEFAULT`).
 
 #### Cuándo usar SQLite
 

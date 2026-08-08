@@ -1,6 +1,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const { app } = require('electron/main');
+const { runMigrations } = require('./migrations');
 
 const MAX_CONTENT_LENGTH = 500;
 
@@ -9,22 +10,12 @@ const MAX_CONTENT_LENGTH = 500;
 // Se abre perezosamente la primera vez que se usa.
 let db = null;
 
-const migrate = (database) => {
-    database.exec(`
-        CREATE TABLE IF NOT EXISTS notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            content TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    `);
-};
-
 const getDb = () => {
     if (!db) {
         const dbPath = path.join(app.getPath('userData'), 'app.db');
         db = new DatabaseSync(dbPath);
         db.exec('PRAGMA journal_mode = WAL');
-        migrate(db);
+        runMigrations(db);
     }
     return db;
 };

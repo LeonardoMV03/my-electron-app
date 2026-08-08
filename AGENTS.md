@@ -15,6 +15,7 @@ Proyecto de aprendizaje: app de escritorio con **Electron** + **Electron Forge**
 - `src/preload/index.js` — puente seguro con `contextBridge` + `ipcRenderer`. Única vía para que el renderer hable con main. Expone `window.versions` y `window.api`.
 - `src/renderer/` — UI (`index.html` + `renderer.js`). CSP estricta (`script-src 'self'`): nada de scripts inline ni CDN.
 - `src/db/database.js` — acceso a SQLite con `node:sqlite` (integrado en Node 24, sin módulos nativos), solo desde el proceso principal. DB en `app.getPath('userData')`.
+- `src/db/migrations.js` — migraciones versionadas con `PRAGMA user_version`. Para un cambio de esquema: agregar una función nueva al final del array `MIGRATIONS` (nunca editar una aplicada); `runMigrations` aplica solo los pendientes en una transacción.
 - `src/shared/ipc.js` — constantes de canales IPC. Única fuente de verdad: main y preload las importan para evitar typos.
 - **Flujo para nuevo canal IPC**: 1) constante en `src/shared/ipc.js`, 2) `ipcMain.handle` en `src/main/index.js`, 3) función con `ipcRenderer.invoke` en `src/preload/index.js`, 4) consumir desde `src/renderer/renderer.js`. Renderer nunca accede a Node directamente.
 
