@@ -4,6 +4,10 @@
   "description": "develop a desktop app with electron",
   "license": "MIT",
   "author": "Leonardo Martinez Vazquez",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LeonardoMV03/my-electron-app.git"
+  },
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
@@ -26,6 +30,7 @@
     "electron": "^43.2.0"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-squirrel-startup": "^1.0.1",
+    "update-electron-app": "^3.3.0"
   }
 }
